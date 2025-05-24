@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAD图纸渲染对比</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .image-container {
+            overflow: auto;
+            max-height: 80vh;
+            border: 1px solid #ddd;
+            margin: 20px 0;
+            position: relative;
+        }
+        .image-container img {
+            max-width: 100%;
+            display: block;
+        }
+        .comparison {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .comparison-item {
+            flex: 1;
+            min-width: 300px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+        }
+        .info {
+            background-color: #f0f7ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .zoom-controls {
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 5px 10px;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+        .download-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .download-link:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CAD图纸渲染对比</h1>
+        
+        <div class="info">
+            <p>本页面展示了标准渲染和高质量渲染的对比，以解决复杂CAD图纸中丢失元素的问题。</p>
+            <p><strong>问题：</strong>标准渲染可能会丢失复杂CAD图纸中的一些细节和元素。</p>
+            <p><strong>解决方案：</strong>使用高质量渲染设置，包括更高的DPI、RGB颜色空间和注释包含。</p>
+        </div>
+        
+        <div class="zoom-controls">
+            <button onclick="zoomIn()">放大 +</button>
+            <button onclick="zoomOut()">缩小 -</button>
+            <button onclick="resetZoom()">重置</button>
+        </div>
+        
+        <h2>标准渲染 (DPI=300)</h2>
+        <div class="image-container" id="standard-container">
+            <img src="/static/images/5b7192fb-b2a3-421c-8d2c-76a07f20dcd2/page_1.png" alt="标准渲染的CAD图纸" id="standard-image">
+        </div>
+        <a href="/static/images/5b7192fb-b2a3-421c-8d2c-76a07f20dcd2/page_1.png" download class="download-link">下载标准渲染图像</a>
+        
+        <h2>高质量渲染 (DPI=600, RGB颜色空间, 包含注释)</h2>
+        <div class="image-container" id="high-quality-container">
+            <img src="/static/images/cad_high_quality/page_1_high_quality.png" alt="高质量渲染的CAD图纸" id="high-quality-image">
+        </div>
+        <a href="/static/images/cad_high_quality/page_1_high_quality.png" download class="download-link">下载高质量渲染图像</a>
+        
+        <h2>渲染参数对比</h2>
+        <table border="1" cellpadding="10" style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+            <tr style="background-color: #f2f2f2;">
+                <th>参数</th>
+                <th>标准渲染</th>
+                <th>高质量渲染</th>
+            </tr>
+            <tr>
+                <td>DPI</td>
+                <td>300</td>
+                <td>600</td>
+            </tr>
+            <tr>
+                <td>颜色空间</td>
+                <td>默认</td>
+                <td>RGB</td>
+            </tr>
+            <tr>
+                <td>包含注释</td>
+                <td>否</td>
+                <td>是</td>
+            </tr>
+            <tr>
+                <td>图像尺寸</td>
+                <td>9934 x 7017 像素</td>
+                <td>19867 x 14034 像素</td>
+            </tr>
+        </table>
+        
+        <h2>使用说明</h2>
+        <div class="info">
+            <p>要处理复杂的CAD图纸，可以使用我们提供的高质量渲染工具：</p>
+            <pre>python cad_renderer.py your_cad_file.pdf -o output_directory -d 600</pre>
+            <p>参数说明：</p>
+            <ul>
+                <li><code>your_cad_file.pdf</code>: 要处理的CAD PDF文件路径</li>
+                <li><code>-o output_directory</code>: 输出目录路径</li>
+                <li><code>-d 600</code>: 输出图像的DPI，建议使用600以上以获得最佳效果</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        let zoomLevel = 1;
+        const zoomFactor = 0.2;
+        const standardImage = document.getElementById('standard-image');
+        const highQualityImage = document.getElementById('high-quality-image');
+        
+        function zoomIn() {
+            zoomLevel += zoomFactor;
+            applyZoom();
+        }
+        
+        function zoomOut() {
+            if (zoomLevel > zoomFactor) {
+                zoomLevel -= zoomFactor;
+                applyZoom();
+            }
+        }
+        
+        function resetZoom() {
+            zoomLevel = 1;
+            applyZoom();
+        }
+        
+        function applyZoom() {
+            standardImage.style.transform = `scale(${zoomLevel})`;
+            standardImage.style.transformOrigin = 'top left';
+            highQualityImage.style.transform = `scale(${zoomLevel})`;
+            highQualityImage.style.transformOrigin = 'top left';
+        }
+    </script>
+</body>
+</html>

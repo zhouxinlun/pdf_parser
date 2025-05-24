@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>增强型CAD图纸渲染</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .image-container {
+            overflow: auto;
+            max-height: 80vh;
+            border: 1px solid #ddd;
+            margin: 20px 0;
+        }
+        .image-container img {
+            max-width: 100%;
+            display: block;
+        }
+        .comparison {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .comparison-item {
+            flex: 1;
+            min-width: 300px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+        }
+        .info {
+            background-color: #f0f7ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>增强型CAD图纸渲染</h1>
+        
+        <div class="info">
+            <p>使用增强型渲染设置处理复杂CAD图纸，确保所有元素都被正确渲染。</p>
+            <p>渲染参数：</p>
+            <ul>
+                <li>DPI: 600</li>
+                <li>颜色空间: RGB</li>
+                <li>包含注释: 是</li>
+            </ul>
+        </div>
+        
+        <h2>增强渲染结果</h2>
+        <div class="image-container">
+            <img src="/static/images/enhanced_test4.png" alt="增强渲染的CAD图纸">
+        </div>
+        
+        <h2>对比</h2>
+        <div class="comparison">
+            <div class="comparison-item">
+                <h3>标准渲染</h3>
+                <div class="image-container">
+                    <img src="/static/images/5315b186-2cc0-4958-962c-461095cc1c99/page_1.png" alt="标准渲染的CAD图纸">
+                </div>
+            </div>
+            <div class="comparison-item">
+                <h3>增强渲染</h3>
+                <div class="image-container">
+                    <img src="/static/images/enhanced_test4.png" alt="增强渲染的CAD图纸">
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

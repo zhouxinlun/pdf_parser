@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF图像提取器</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .container {
+            max-width: 800px;
+        }
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .result-container {
+            display: none;
+        }
+        .pdf-info {
+            margin-bottom: 20px;
+        }
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .image-card {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            text-align: center;
+        }
+        .image-card img {
+            max-width: 100%;
+            max-height: 150px;
+            object-fit: contain;
+        }
+        .image-card .info {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">PDF图像提取器</h1>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">上传PDF文件</h5>
+            </div>
+            <div class="card-body">
+                <form id="pdfForm">
+                    <div class="mb-3">
+                        <label for="pdfFile" class="form-label">选择PDF文件</label>
+                        <input class="form-control" type="file" id="pdfFile" name="pdf_file" accept=".pdf" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="minSize" class="form-label">最小图像尺寸（像素）</label>
+                                <input type="number" class="form-control" id="minSize" name="min_size" value="100" min="1">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="dpi" class="form-label">DPI（适用于整页渲染）</label>
+                                <input type="number" class="form-control" id="dpi" name="dpi" value="300" min="72" max="600">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="overlapThreshold" class="form-label">重叠面积比例阈值（0-1）</label>
+                                <input type="number" class="form-control" id="overlapThreshold" name="overlap_threshold" value="0.8" min="0" max="1" step="0.1">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="forceMode" class="form-label">强制提取模式</label>
+                                <select class="form-select" id="forceMode" name="force_mode">
+                                    <option value="">自动检测</option>
+                                    <option value="vector">矢量PDF（整页渲染）</option>
+                                    <option value="scanned">扫描PDF（整页渲染）</option>
+                                    <option value="digital">数字PDF（图像对象提取）</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="filterDuplicates" name="filter_duplicates" checked>
+                                <label class="form-check-label" for="filterDuplicates">
+                                    过滤重复图像
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="filterContained" name="filter_contained" checked>
+                                <label class="form-check-label" for="filterContained">
+                                    过滤被包含的小图像
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="filterText" name="filter_text">
+                                <label class="form-check-label" for="filterText">
+                                    <strong>跳过只包含文字的PDF或页面</strong> (只输出包含图像的内容)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">提取图像</button>
+                    </div>
+                </form>
+                
+                <div class="loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-2">正在处理PDF文件，请稍候...</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="result-container">
+            <div class="card pdf-info">
+                <div class="card-header">
+                    <h5 class="mb-0">PDF信息</h5>
+                </div>
+                <div class="card-body" id="pdfInfoContainer">
+                    <!-- PDF信息将在这里显示 -->
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">提取的图像</h5>
+                    <a href="#" id="downloadAllBtn" class="btn btn-success btn-sm" style="display: none;">下载所有图像</a>
+                </div>
+                <div class="card-body">
+                    <div id="imagesContainer" class="image-grid">
+                        <!-- 提取的图像将在这里显示 -->
+                    </div>
+                    <div id="noImagesMessage" style="display: none;" class="text-center text-muted mt-4">
+                        <p>未找到图像</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const pdfForm = document.getElementById('pdfForm');
+            const loading = document.querySelector('.loading');
+            const resultContainer = document.querySelector('.result-container');
+            const pdfInfoContainer = document.getElementById('pdfInfoContainer');
+            const imagesContainer = document.getElementById('imagesContainer');
+            const noImagesMessage = document.getElementById('noImagesMessage');
+            const downloadAllBtn = document.getElementById('downloadAllBtn');
+            
+            pdfForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // 显示加载中
+                loading.style.display = 'block';
+                resultContainer.style.display = 'none';
+                
+                // 创建FormData对象
+                const formData = new FormData(pdfForm);
+                
+                // 处理复选框
+                formData.set('filter_duplicates', document.getElementById('filterDuplicates').checked);
+                formData.set('filter_contained', document.getElementById('filterContained').checked);
+                formData.set('filter_text', document.getElementById('filterText').checked);
+                
+                // 发送请求
+                fetch('/api/extract', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // 隐藏加载中
+                    loading.style.display = 'none';
+                    
+                    if (data.error) {
+                        alert('错误: ' + data.error);
+                        return;
+                    }
+                    
+                    // 显示结果容器
+                    resultContainer.style.display = 'block';
+                    
+                    // 显示PDF信息
+                    const pdfInfo = data.pdf_info;
+                    pdfInfoContainer.innerHTML = `
+                        <p><strong>文件名:</strong> ${data.original_filename}</p>
+                        <p><strong>PDF类型:</strong> ${pdfInfo.pdf_type}</p>
+                        <p><strong>页数:</strong> ${pdfInfo.page_count}</p>
+                        <p><strong>提取图像数:</strong> ${data.extracted_count}</p>
+                        ${pdfInfo.creator ? `<p><strong>创建工具:</strong> ${pdfInfo.creator}</p>` : ''}
+                        <p><strong>文本字符数:</strong> ${pdfInfo.total_text_chars}</p>
+                        <p><strong>图像对象数:</strong> ${pdfInfo.total_images}</p>
+                        <p><strong>矢量对象数:</strong> ${pdfInfo.total_vector_objects}</p>
+                    `;
+                    
+                    // 显示提取的图像
+                    imagesContainer.innerHTML = '';
+                    
+                    if (data.extracted_count > 0) {
+                        // 显示下载所有按钮
+                        downloadAllBtn.style.display = 'block';
+                        downloadAllBtn.href = data.zip_download_url;
+                        
+                        // 显示图像
+                        data.images.forEach(image => {
+                            const imageCard = document.createElement('div');
+                            imageCard.className = 'image-card';
+                            imageCard.innerHTML = `
+                                <a href="${image.download_url}" target="_blank">
+                                    <img src="${image.download_url}" alt="提取的图像">
+                                </a>
+                                <div class="info">
+                                    <div>页码: ${image.page}</div>
+                                    <div>尺寸: ${image.width} x ${image.height}</div>
+                                    <div>提取方法: ${image.extraction_method === 'page_render' ? '整页渲染' : '图像对象提取'}</div>
+                                </div>
+                                <a href="${image.download_url}" download class="btn btn-sm btn-outline-primary mt-2">下载</a>
+                            `;
+                            imagesContainer.appendChild(imageCard);
+                        });
+                        
+                        noImagesMessage.style.display = 'none';
+                    } else {
+                        // 显示未找到图像的消息
+                        noImagesMessage.style.display = 'block';
+                        downloadAllBtn.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    loading.style.display = 'none';
+                    alert('请求失败: ' + error);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
