@@ -452,7 +452,33 @@ class PDFImageExtractor:
                         
                         # 转换为PIL图像
                         try:
-                            pil_image = Image.frombytes("RGB", (image.width, image.height), image.original.tobytes())
+                            # 检查image对象是否有original属性
+                            if hasattr(image, 'original') and image.original is not None:
+                                pil_image = Image.frombytes("RGB", (image.width, image.height), image.original.tobytes())
+                            else:
+                                # 如果没有original属性，尝试使用备用方法
+                                print(f"  注意: 第{page_num + 1}页第{i + 1}张图片没有original属性，尝试使用备用方法")
+                                # 使用PyMuPDF直接渲染这个区域
+                                try:
+                                    # 打开PDF文件
+                                    doc_temp = fitz.open(self.pdf_path)
+                                    # 获取页面
+                                    page_temp = doc_temp[page_num]
+                                    # 创建裁剪区域
+                                    clip_rect = fitz.Rect(img["x0"], img["top"], img["x1"], img["bottom"])
+                                    # 计算缩放因子
+                                    zoom_factor = self.dpi / 72
+                                    # 创建一个矩阵来应用缩放
+                                    mat = fitz.Matrix(zoom_factor, zoom_factor)
+                                    # 渲染裁剪区域
+                                    pix = page_temp.get_pixmap(matrix=mat, clip=clip_rect, alpha=False)
+                                    # 转换为PIL图像
+                                    pil_image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                                    # 关闭文档
+                                    doc_temp.close()
+                                except Exception as backup_error:
+                                    print(f"  警告: 备用方法提取第{page_num + 1}页第{i + 1}张图片时出错: {backup_error}")
+                                    continue
                         except Exception as convert_error:
                             print(f"  警告: 转换第{page_num + 1}页第{i + 1}张图片时出错: {convert_error}")
                             continue
